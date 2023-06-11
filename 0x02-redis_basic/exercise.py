@@ -2,32 +2,32 @@
 """0. Writing strings to Redis"""
 import redis
 import uuid
-from typing import Union, Optional, Callable
+from typing import Union, Callable, Optional
 from functools import wraps
 
 
 def count_calls(method: Callable) -> Callable:
-    ''' a function that counts how many times a cache is called'''
+    """Count how many times methods of the Cache class are called"""
 
     @wraps(method)
     def wrapper(self, *args, **kwds):
-        '''wrapper function'''
+        """Wrapper function"""
         key = method.__qualname__
         self._redis.incr(key)
-        return method(self, *args,**kwds)
+        return method(self, *args, **kwds)
 
     return wrapper
 
 
-def call_history(method: Caallable) -> Callable:
-    ''' function that stores history of inputs and outputs '''
+def call_history(method: Callable) -> Callable:
+    """Store the history of inputs and outputs for a particular function"""
 
     @wraps(method)
-    def wrapper(self, *args,**kwds)
-        '''wrapper function '''
+    def wrapper(self, *args, **kwds):
+        """Wrapper function"""
         self._redis.rpush(method.__qualname__ + ":inputs", str(args))
         output = method(self, *args, **kwds)
-        self.__redis.rpush(method.__qualname__ + ":outputs", str(output))
+        self._redis.rpush(method.__qualname__ + ":outputs", str(output))
         return output
 
     return wrapper
@@ -39,7 +39,7 @@ class Cache:
         """Constructor"""
         self._redis = redis.Redis()
         self._redis.flushdb()
-    
+
     @count_calls
     @call_history
     def store(self, data: Union[str, bytes, int, float]) -> str:
@@ -57,21 +57,21 @@ class Cache:
         return data
 
     def get_str(self, key: str) -> str:
-        ''' a function that get data from redis as str'''
+        """Get data from redis as string"""
         return self.get(key, str)
 
     def get_int(self, key: str) -> int:
-        ''' gets data from redis as int '''
+        """Get data from redis as integer"""
         return self.get(key, int)
 
 
-    def replay(val: Cache):
-        '''replays history of all calls made on class'''
-        clsName = val.__qualname__
-        print(f"""{clsName} was called {
-                val.__self__.get(clsName).decode("utf-8")} times:""")
-        inputs = val.__self__.redis.lrange(f"{clsName}:inputs", 0, -1)
-        outputs = val.__self.redis.lrange(f"{clsName}:outputs", 0, -1)
-        zipped = zip(inputs, outputs)
-        for i, o in zipped:
-            print(f"""{clsName}(*{i.decode("utf-8")}) -> {o.decode("utf-8")}""")
+def replay(val: Cache):
+    """display history of all calls made on a particular class"""
+    clsName = val.__qualname__
+    print(f"""{clsName} was called {
+            val.__self__.get(clsName).decode("utf-8")} times:""")
+    inputs = val.__self__._redis.lrange(f"{clsName}:inputs", 0, -1)
+    outputs = val.__self__._redis.lrange(f"{clsName}:outputs", 0, -1)
+    zipped = zip(inputs, outputs)
+    for i, o in zipped:
+        print(f"""{clsName}(*{i.decode("utf-8")}) -> {o.decode("utf-8")}""")
