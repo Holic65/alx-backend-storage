@@ -2,7 +2,21 @@
 """0. Writing strings to Redis"""
 import redis
 import uuid
-from typing import Union
+from typing import Union, Optional, Callable
+from functools import wraps
+
+
+def count_calls(method: Callable) -> Callable:
+    ''' a function that counts how many times a cache is called'''
+
+    @wraps(method)
+    def wrapper(self, *args, **kwds):
+        '''wrapper function'''
+        key = method.__qualname__
+        self._redis.incr(key)
+        return method(self, *args,**kwds)
+
+    return wrapper
 
 
 class Cache:
@@ -33,3 +47,4 @@ class Cache:
     def get_int(self, key: str) -> int:
         ''' gets data from redis as int '''
         return self.get(key, int)
+
