@@ -25,3 +25,11 @@ class Cache:
         if fn:
             return fn(data)
         return data
+
+    def get_str(self, key: str) -> str:
+        ''' a function that get data from redis as str'''
+        return self.get(key, str)
+
+    def get_int(self, key: str) -> int:
+        ''' gets data from redis as int '''
+        return self.get(key, int)
