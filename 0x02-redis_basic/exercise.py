@@ -64,3 +64,14 @@ class Cache:
         ''' gets data from redis as int '''
         return self.get(key, int)
 
+
+    def replay(val: Cache):
+        '''replays history of all calls made on class'''
+        clsName = val.__qualname__
+        print(f"""{clsName} was called {
+                val.__self__.get(clsName).decode("utf-8")} times:""")
+        inputs = val.__self__.redis.lrange(f"{clsName}:inputs", 0, -1)
+        outputs = val.__self.redis.lrange(f"{clsName}:outputs", 0, -1)
+        zipped = zip(inputs, outputs)
+        for i, o in zipped:
+            print(f"""{clsName}(*{i.decode("utf-8")}) -> {o.decode("utf-8")}""")
